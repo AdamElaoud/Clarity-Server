@@ -3,7 +3,7 @@ function logger(req, resp, next) {
 
     // log the request URL
     console.log("Request received from:");
-    console.log(`${req.method} ${req.protocol}::/${req.get("host")}${req.originalUrl}`);
+    console.log(`${req.method} ${req.protocol}:/${req.get("host")}${req.originalUrl}`);
 
     // log the request body
     console.log("Request body:");

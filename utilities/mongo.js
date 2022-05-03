@@ -1,4 +1,4 @@
-const { MongoClient, ISODate } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const Validator = require("./validator");
 const LevelCurve = require("./levelCurve");
 // load environment variables
@@ -8,7 +8,7 @@ module.exports = {
     // add a task to the DB
     async addTask(req) {
         // validate structure of request
-        Validator.validateTaskSubmission(req); // throws error upon invalid JSON
+        Validator.validateTask(req); // throws error upon invalid JSON
 
         // create database client
         const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
@@ -20,10 +20,45 @@ module.exports = {
             const tasks = db.collection("tasks");
 
             // spread operator to prevent Objectid from being returned in response
-            await tasks.insertOne({
+            const insertedTask = await tasks.insertOne({
                 username: req.username,
                 ...req.task
             });
+
+            return insertedTask;
+
+        } catch (err) {
+            console.log(`error occured accessing database:\n ${err}`);
+            throw err;
+
+        } finally {
+            dbClient.close();
+        }
+    },
+    // mark a task as complete
+    async markComplete(req) {
+        // create database client
+        const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
+
+        try {
+            await dbClient.connect();
+            const db = dbClient.db("DetoxDB");
+
+            const tasks = db.collection("tasks");
+
+            // spread operator to prevent Objectid from being returned in response
+            const result = await tasks.findOneAndUpdate(
+                {
+                    _id: ObjectId(req.params.id)
+                },
+                {
+                    $set: {
+                        completed: true
+                    }
+                }
+            );
+
+            console.log(result);
 
         } catch (err) {
             console.log(`error occured accessing database:\n ${err}`);
@@ -36,7 +71,7 @@ module.exports = {
     // add a user to the DB
     async addUser(req) {
         // validate structure of request
-        Validator.validateUserSubmission(req); // throws error upon invalid JSON
+        Validator.validateUser(req); // throws error upon invalid JSON
 
         // create database client
         const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
@@ -170,10 +205,10 @@ module.exports = {
 
             // use projection on cursor to only return certain values upon iteration
             }).project({
-                _id: 0,
                 username: 0,
                 displayname: 0,
-                detoxday: 0
+                detoxday: 0,
+                projects: 0
             }).next();
 
             return result;
@@ -187,7 +222,7 @@ module.exports = {
         }
     },
     // get days to detox for a given user
-    async getDaysToDetox(username, date) {
+    async getDetoxData(username, date) {
         // create database client
         const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
 
@@ -211,7 +246,10 @@ module.exports = {
             // calculate days to detox
             const remaining = ((7 - dayIndex) + detoxIndex) % 7;
 
-            return remaining;
+            return {
+                detoxDay: result.detoxday,
+                daysToDetox: remaining
+            };
 
         } catch (err) {
             console.log(`error occured accessing database:\n${err}`);
@@ -222,7 +260,7 @@ module.exports = {
         }
     },
     // get projects and categories for a given user
-    async getProjects(username) {
+    async getProjectTree(username) {
         // create database client
         const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
 
@@ -267,7 +305,6 @@ module.exports = {
 
             // use projection on cursor to only return certain values upon iteration
             }).project({
-                _id: 0,
                 username: 0,
                 year: 0,
                 month: 0,
@@ -302,7 +339,6 @@ module.exports = {
 
             // use projection on cursor to only return certain values upon iteration
             }).project({
-                _id: 0,
                 username: 0,
                 year: 0,
                 month: 0,
@@ -349,7 +385,6 @@ module.exports = {
     
                 // use projection on cursor to only return certain values upon iteration
                 }).project({
-                    _id: 0,
                     username: 0,
                     year: 0,
                     day: 0
@@ -363,7 +398,6 @@ module.exports = {
                     "year": year.toString(),
                     "month": prevMonth
                 }).project({
-                    _id: 0,
                     username: 0,
                     year: 0,
                     day: 0
@@ -385,7 +419,6 @@ module.exports = {
     
                 // use projection on cursor to only return certain values upon iteration
                 }).project({
-                    _id: 0,
                     username: 0,
                     year: 0,
                     day: 0

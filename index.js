@@ -3,7 +3,7 @@ const Logger = require("./middleware/logger");
 require("dotenv-flow").config();
 
 // defaults to port 3001 if no value is given for the environment variable
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5001;
 
 const app = express();
 
@@ -19,6 +19,7 @@ app.use((req, res, next) => {
 
 // ROUTES
 app.use("/api/user", require("./routes/api/user"));
+app.use("/api/task", require("./routes/api/task"));
 
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);

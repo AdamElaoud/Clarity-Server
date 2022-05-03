@@ -1,7 +1,7 @@
 const { validate } = require("jsonschema");
 
 module.exports = {
-    validateTaskSubmission(req) {
+    validateTask(req) {
         let result = validate(req, taskSchema);
         
         console.log(`Valid Structure: ${result.valid}`);
@@ -9,7 +9,7 @@ module.exports = {
         if (!result.valid)
             throw "The provided JSON does not have a valid structure."
     },
-    validateUserSubmission(req) {
+    validateUser(req) {
         let result = validate(req, userSchema);
         
         console.log(`Valid Structure: ${result.valid}`);
@@ -83,6 +83,10 @@ const taskSchema = {
                 xp: {
                     description: "XP value for completed task",
                     type: "integer"
+                },
+                complete: {
+                    description: "completion status of task",
+                    type: "string"
                 }
             },
             required: ["proj", "cat", "desc", "date"]

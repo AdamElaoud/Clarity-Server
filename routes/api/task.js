@@ -27,6 +27,23 @@ router.get("/getTasksInMonth/:username/:year/:month", async (req, res) => {
     }
 });
 
+// update all tasks
+router.get("/updateAllTasks", async (req, res) => {
+    try {
+        await Mongo.updateAllTasks();
+
+        res.status(200).json({
+            message: `update of all tasks successful`
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            message: `update of all tasks unsuccessful`,
+            error: err
+        });
+    }
+});
+
 /* ------------------------------------------------- POST ------------------------------------------------- */
 
 // add a task to the DB
@@ -48,23 +65,41 @@ router.post("/addTask", async (req, res) => {
     }
 });
 
-/* ------------------------------------------------- PUT ------------------------------------------------- */
-
-// mark a task as complete
-router.put("/markComplete/:id", async (req, res) => {
+// add a task to the DB
+router.post("/deleteTask", async (req, res) => {
     try {
-        await Mongo.markComplete(req);
+        await Mongo.deleteTask(req.body);
 
         res.status(200).json({
-            message: `marked task as complete in database`,
-            id: req.params.id
+            message: `delete task database successful`
         });
 
     } catch (err) {
         res.status(500).json({
-            message: `marking task as complete unsuccessful`,
+            message: `delete task from database unsuccessful`,
             error: err,
-            id: req.params.id
+            data: req.body
+        });
+    }
+});
+
+/* ------------------------------------------------- PUT ------------------------------------------------- */
+
+// update field(s) on a task
+router.put("/updateTask", async (req, res) => {
+    try {
+        const updatedTask = await Mongo.updateTask(req.body);
+
+        res.status(200).json({
+            message: `updated task successful`,
+            updatedTask: updatedTask
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            message: `update task unsuccessful`,
+            error: err,
+            id: req.body._id
         });
     }
 });

@@ -5,6 +5,36 @@ const LevelCurve = require("./levelCurve");
 require("dotenv-flow");
 
 module.exports = {
+    // update all documents
+    async updateAllTasks() {
+        // create database client
+        const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
+
+        try {
+            await dbClient.connect();
+            const db = dbClient.db("DetoxDB");
+
+            const tasks = db.collection("tasks");
+
+            // spread operator to prevent Objectid from being returned in response
+            await tasks.updateMany(
+                { xp: 30 },
+                {
+                    $set: {
+                        type: "Major"
+                    }
+                },
+                { upsert: true }
+            );
+
+        } catch (err) {
+            console.log(`error occured accessing database:\n ${err}`);
+            throw err;
+
+        } finally {
+            dbClient.close();
+        }
+    },
     // add a task to the DB
     async addTask(req) {
         // validate structure of request
@@ -22,7 +52,8 @@ module.exports = {
             // spread operator to prevent Objectid from being returned in response
             const insertedTask = await tasks.insertOne({
                 username: req.username,
-                ...req.task
+                ...req.task,
+                _id: new ObjectId(req.task._id)
             });
 
             return insertedTask;
@@ -35,8 +66,8 @@ module.exports = {
             dbClient.close();
         }
     },
-    // mark a task as complete
-    async markComplete(req) {
+    // update field(s) on a task
+    async updateTask(req) {
         // create database client
         const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
 
@@ -47,18 +78,36 @@ module.exports = {
             const tasks = db.collection("tasks");
 
             // spread operator to prevent Objectid from being returned in response
-            const result = await tasks.findOneAndUpdate(
+            const updatedTask = await tasks.updateOne(
+                { _id:  new ObjectId(req._id) },
                 {
-                    _id: ObjectId(req.params.id)
-                },
-                {
-                    $set: {
-                        completed: true
-                    }
+                    $set: req.updates
                 }
             );
 
-            console.log(result);
+            return updatedTask;
+
+        } catch (err) {
+            console.log(`error occured accessing database:\n ${err}`);
+            throw err;
+
+        } finally {
+            dbClient.close();
+        }
+    },
+    // delete a task
+    async deleteTask(req) {
+        // create database client
+        const dbClient = new MongoClient(process.env.MONGOURI, { useUnifiedTopology: true });
+
+        try {
+            await dbClient.connect();
+            const db = dbClient.db("DetoxDB");
+
+            const tasks = db.collection("tasks");
+
+            // spread operator to prevent Objectid from being returned in response
+            await tasks.deleteOne({ _id: new ObjectId(req._id) });
 
         } catch (err) {
             console.log(`error occured accessing database:\n ${err}`);

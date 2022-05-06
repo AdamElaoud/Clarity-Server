@@ -84,8 +84,16 @@ const taskSchema = {
                     description: "XP value for completed task",
                     type: "integer"
                 },
-                complete: {
+                type: {
+                    description: "type category of the task",
+                    type: "string"
+                },
+                completed: {
                     description: "completion status of task",
+                    type: "boolean"
+                },
+                _id: {
+                    description: "unique identifier for the task",
                     type: "string"
                 }
             },

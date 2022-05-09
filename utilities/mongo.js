@@ -18,10 +18,10 @@ module.exports = {
 
             // spread operator to prevent Objectid from being returned in response
             await tasks.updateMany(
-                { xp: 30 },
+                {},
                 {
                     $set: {
-                        type: "Major"
+                        matrix: "nuni"
                     }
                 },
                 { upsert: true }
